@@ -4,67 +4,98 @@ using System.Security.Cryptography;
 using UnityEngine;
 using UnityEngine.Networking;
 
+public enum ModesTrafficLights
+{
+    OppositeDirectionsX,
+    OppositeDirectionsY
+}
+
 public class SystemTrafficLight : MonoBehaviour
 {
-    public trafficLight trafficLightA, trafficLightB, trafficLightC, trafficLightD;
+    public TrafficLight[] trafficLights;
+    public int[] amoutCarsByStreet;
+    public float timeByMode;
 
-    public float trafficLightTime;
-    public float trafficTime;
+    public bool change;
 
+    public TrafficManagement trafficManagement;
+
+    public GameObject TurnA, TurnC;
+
+    public Zone zone;
     private void Start()
     {
-        SetA();
-    }
-    void Update()
-    {
-        if (Input.GetKey(KeyCode.A))
-        {
-            SetA();
-        }
-        else if (Input.GetKey(KeyCode.B))
-        {
-            SetB();
-        }
-        else if (Input.GetKey(KeyCode.C))
-        {
-            SetC();
-        }
-        else if (Input.GetKey(KeyCode.D))
-        {
-            SetD();
-        }
-        else
-        {
-            
-        }
+        change = false;
     }
 
-    void SetA() {
-        trafficLightA.SetLightStates(LightState.green);
-        trafficLightB.SetLightStates(LightState.red);
-        trafficLightC.SetLightStates(LightState.red);
-        trafficLightD.SetLightStates(LightState.red);
-    }
-    void SetB()
+    public void StarTraffic()
     {
-        trafficLightA.SetLightStates(LightState.red);
-        trafficLightB.SetLightStates(LightState.green);
-        trafficLightC.SetLightStates(LightState.red);
-        trafficLightD.SetLightStates(LightState.red);
+        StartCoroutine(SystemTraffic());
     }
 
-    void SetC()
+    //Traffic Light Modes
+    void ModeOppositedirectionsX()
     {
-        trafficLightA.SetLightStates(LightState.red);
-        trafficLightB.SetLightStates(LightState.red);
-        trafficLightC.SetLightStates(LightState.green);
-        trafficLightD.SetLightStates(LightState.red);
+
+        trafficLights[0].SetLightStates(LightState.green);
+        trafficLights[2].SetLightStates(LightState.green);
+        trafficLights[1].SetLightStates(LightState.red);
+        trafficLights[3].SetLightStates(LightState.red);
+        TurnA.SetActive(true);
+        TurnC.SetActive(true);
     }
-    void SetD()
+    void ModeOppositedirectionsY()
     {
-        trafficLightA.SetLightStates(LightState.red);
-        trafficLightB.SetLightStates(LightState.red);
-        trafficLightC.SetLightStates(LightState.green);
-        trafficLightD.SetLightStates(LightState.red);
+        trafficLights[0].SetLightStates(LightState.red);
+        trafficLights[1].SetLightStates(LightState.green);
+        trafficLights[3].SetLightStates(LightState.green);
+        TurnA.SetActive(false);
+        TurnC.SetActive(false);
+
+    }
+
+    void ModeYellow()
+    {
+        trafficLights[0].SetLightStates(LightState.yellow);
+        trafficLights[2].SetLightStates(LightState.yellow);
+        trafficLights[1].SetLightStates(LightState.yellow);
+        trafficLights[3].SetLightStates(LightState.yellow);
+    }
+
+    IEnumerator SystemTraffic()
+    {
+        while (true)
+        {
+            if (trafficManagement.GetSumCars()==1) 
+            {
+                //Debug.Log("A: " + trafficManagement.GetSumA());
+                ModeYellow();
+                yield return new WaitForSeconds(1f);
+                while (zone.IsCarInside())
+                {
+                    yield return new WaitForSeconds(1f);
+                }
+                ModeOppositedirectionsX();
+                yield return new WaitForSeconds(5);
+            }
+            else if(trafficManagement.GetSumCars() == 2)
+            {
+                //Debug.Log("B :" + trafficManagement.GetSumB());
+                ModeYellow();
+                yield return new WaitForSeconds(1f);
+                while (zone.IsCarInside())
+                {
+                    yield return new WaitForSeconds(1f);
+                }
+                ModeOppositedirectionsY();
+                yield return new WaitForSeconds(5);
+            }
+            else
+            {
+                ModeYellow();
+                yield return new WaitForSeconds(2);
+            }
+            change = true;
+        }
     }
 }
